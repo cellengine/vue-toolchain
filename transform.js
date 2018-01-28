@@ -3,6 +3,9 @@ const generate = require('babel-generator').default;
 const Compiler = require('vue-template-compiler');
 const transpile = require('vue-template-es2015-compiler');
 
+// Requiring it directly avoids babel/babel#3969
+const ExportDefaultPlugin = require('babel-plugin-transform-es2015-modules-commonjs');
+
 function functionDeclarationToExpression(declaration) {
   if (declaration.type === 'FunctionDeclaration') {
     declaration.type = 'FunctionExpression';
@@ -83,7 +86,7 @@ module.exports = function (vueSource, vueFilename) {
   const renderFunctionExpression = functionSourceToExpression(renderSource);
   const plugin = getPlugin(renderFunctionExpression);
   const ast = babel.transform(script ? script.content : '', {
-    plugins: [plugin, 'transform-es2015-modules-commonjs']
+    plugins: [plugin, ExportDefaultPlugin]
   }).ast;
 
   return generate(ast, {sourceMaps: true, sourceFileName: vueFilename});
