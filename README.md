@@ -5,6 +5,8 @@ This is a small suite of tools for bundling and testing a Vue project.
 Its main motivation was to require Vue files in node for testing - no DOM required:
 
 ```javascript
+require('vue-toolchain/register'); // now you can require .vue files
+
 const Button = require('./Button.vue').default;
 const Vue = require('vue');
 
