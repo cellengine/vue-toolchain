@@ -1,5 +1,8 @@
 const transform = require('./transform');
+const register = require('./register');
 
 module.exports = {
-  transform
+  transform,
+  register,
+  gulp
 };
