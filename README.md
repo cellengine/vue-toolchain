@@ -55,7 +55,7 @@ You can pipe the `.vue` files through this Gulp util in order to get styles out.
 
 ```javascript
 const gulp = require('gulp');
-const vueToStyle = require('../gulp-vue-to-style-stream');
+const vueToStyle = require('vue-toolchain/gulp-vue-to-style-stream');
 const scss = require('gulp-sass');
 const concat = require('gulp-concat');
 
