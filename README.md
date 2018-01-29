@@ -8,7 +8,7 @@ This is a small suite of tools for bundling and testing a Vue project. Its main 
 
 ## `vue-toolchain/register`
 
-[Example](https://github.com/primitybio/vue-toolchain/blob/master/package.json#L9) <sub>(change `register.js` to `vue-toolchain/register`)</sub>
+[Example](https://github.com/primitybio/vue-toolchain/blob/master/package.json#L9) <sub><sup>(change `register.js` to `vue-toolchain/register`)</sup></sub>
 
 You can use this with [Mocha](https://github.com/mochajs/mocha) to launch tests that require Vue files. Say you have some tests, `Button.spec.js` for `Button.vue`. Assume `Button.spec.js` looks like this:
 
