@@ -76,18 +76,22 @@ function getLineNumbers(blocks, vueSource) {
   });
 }
 
-module.exports = function (vueSource, vueFilename) {
-  const {script, template} = Compiler.parseComponent(vueSource, {pad: "line"});
-  const renderSource = template ? transpile(`
-    function render(_h, _vm) {
-      ${Compiler.compile(template.content).render}
-    }
-  `) : '';
-  const renderFunctionExpression = functionSourceToExpression(renderSource);
-  const plugin = getPlugin(renderFunctionExpression);
-  const ast = babel.transform(script ? script.content : '', {
-    plugins: [plugin, ExportDefaultPlugin]
-  }).ast;
+module.exports = function (vueSource, vueFilename, extraPlugins) {
+  const plugins = [ExportDefaultPlugin].concat(extraPlugins || []);
+  const {script, template} = Compiler.parseComponent(vueSource, {pad: 'line'});
+  const c = template && Compiler.compile(template ? template.content : '');
 
-  return generate(ast, {sourceMaps: true, sourceFileName: vueFilename});
+  if (c) {
+    const renderSource = transpile(`
+      function render(_h, _vm) {
+        ${c.render}
+      }
+    `);
+    const renderFunctionExpression = functionSourceToExpression(renderSource);
+    plugins.unshift(getPlugin(renderFunctionExpression));
+  }
+
+  const ast = babel.transform(script ? script.content : '', {plugins}).ast;
+
+  return generate(ast, {sourceMaps: true, filename: vueFilename, sourceFileName: vueFilename, sourceMapTarget: vueFilename});
 };
