@@ -1,19 +1,12 @@
 const babel = require('babel-core');
 const generate = require('babel-generator').default;
-const Compiler = require('vue-template-compiler');
-const transpile = require('vue-template-es2015-compiler');
+const compiler = require('vue-template-compiler');
+const cutils = require('@vue/component-compiler-utils');
 
 // Requiring it directly avoids babel/babel#3969
 const ExportDefaultPlugin = require('babel-plugin-transform-es2015-modules-commonjs');
 
-function functionDeclarationToExpression(declaration) {
-  if (declaration.type === 'FunctionDeclaration') {
-    declaration.type = 'FunctionExpression';
-  }
-  return declaration;
-}
-
-function functionSourceToExpression(src) {
+function getRenderFunctionExpression(src) {
   const ast = babel.transform(src).ast;
   
   babel.traverse(ast, {
@@ -24,7 +17,7 @@ function functionSourceToExpression(src) {
     }
   });
 
-  return functionDeclarationToExpression(ast.program.body[0]);
+  return ast.program.body[0].declarations[0].init;
 }
 
 const {
@@ -38,27 +31,41 @@ const {
   ExportDefaultDeclaration
 } = babel.types;
 
-const getPlugin = renderFunctionExpression => {
+const getPlugin = (renderFunctionExpression, isFunctional) => {
   return function AddFunctionPlugin() {
     return {
       visitor: {
         ExportDefaultDeclaration(path) {
           const body = path.parent.body;
-          const expression = functionDeclarationToExpression(path.node.declaration);
-          const modifiedExport = VariableDeclaration('const',
-            [VariableDeclarator(Identifier('__export__'), expression)]
-          );
+          const expression = path.node.declaration;
 
-          body.splice(body.indexOf(path.node), 1,
-            modifiedExport,
-            ExpressionStatement(
+          const statements = [
+            VariableDeclaration('const',
+              [VariableDeclarator(Identifier('__export__'), expression)]
+            ),
+            ExportDefaultDeclaration(Identifier('__export__'))
+          ];
+
+          if (renderFunctionExpression) {
+            statements.splice(1, 0, ExpressionStatement(
               AssignmentExpression('=',
                 MemberExpression(Identifier('__export__'), Identifier('render')),
                 renderFunctionExpression
               )
-            ),
-            ExportDefaultDeclaration(Identifier('__export__'))
-          );
+            ));
+          }
+
+          if (isFunctional) {
+            statements.splice(1, 0, ExpressionStatement(
+              AssignmentExpression('=',
+                MemberExpression(Identifier('__export__'), Identifier('functional')),
+                Identifier('true')
+              )
+            ));
+          }
+
+          const args = [body.indexOf(path.node), 1].concat(statements);
+          body.splice.apply(body, args);
 
           path.stop();
         }
@@ -67,31 +74,25 @@ const getPlugin = renderFunctionExpression => {
   }
 };
 
-function getLineNumbers(blocks, vueSource) {
-  const lines = [0];
-  let last = 0;
-  vueSource.split(/\r?\n/g).forEach(line => {
-    last += line.length;
-    lines.push(last - 1);
-  });
-}
-
 module.exports = function (vueSource, vueFilename, extraPlugins) {
   const plugins = [ExportDefaultPlugin].concat(extraPlugins || []);
-  const {script, template} = Compiler.parseComponent(vueSource, {pad: 'line'});
-  const c = template && Compiler.compile(template ? template.content : '');
 
-  if (c) {
-    const renderSource = transpile(`
-      function render(_h, _vm) {
-        ${c.render}
-      }
-    `);
-    const renderFunctionExpression = functionSourceToExpression(renderSource);
-    plugins.unshift(getPlugin(renderFunctionExpression));
-  }
+  const {script, template} = cutils.parse({
+    source: vueSource,
+    compiler,
+    needMap: false
+  });
 
-  const ast = babel.transform(script ? script.content : '', {plugins}).ast;
+  const {code} = template ? cutils.compileTemplate({
+    source: template.content,
+    compiler,
+    isFunctional: template && template.attrs.functional
+  }) : {};
+
+  const renderFunctionExpression = code && getRenderFunctionExpression(code);
+  plugins.unshift(getPlugin(renderFunctionExpression, template && template.attrs.functional));
+
+  const ast = babel.transform(script ? script.content : 'export default {};', {plugins}).ast;
 
   return generate(ast, {sourceMaps: true, filename: vueFilename, sourceFileName: vueFilename, sourceMapTarget: vueFilename});
 };
