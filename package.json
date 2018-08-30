@@ -1,6 +1,6 @@
 {
   "name": "vue-toolchain",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Simplified toolchain for Vue development",
   "main": "index.js",
   "author": "Caleb Hearon",
@@ -20,8 +20,8 @@
     "gulp-sass": "^3.1.0",
     "mocha": "^5.0.0",
     "streamqueue": "^1.1.2",
-    "vue-template-compiler": "^2.5.17",
     "vue": "^2.5.17",
+    "vue-template-compiler": "^2.5.17",
     "webpack": "^3.10.0"
   }
 }
