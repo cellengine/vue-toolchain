@@ -86,7 +86,8 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
   const {code} = template ? cutils.compileTemplate({
     source: template.content,
     compiler,
-    isFunctional: template && template.attrs.functional
+    isFunctional: template && template.attrs.functional,
+    isProduction: true // just disables prettifying render functions as of 2.2.0
   }) : {};
 
   const renderFunctionExpression = code && getRenderFunctionExpression(code);
