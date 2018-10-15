@@ -6,9 +6,7 @@ const cutils = require('@vue/component-compiler-utils');
 // Requiring it directly avoids babel/babel#3969
 const ExportDefaultPlugin = require('babel-plugin-transform-es2015-modules-commonjs');
 
-function getRenderFunctionExpression(src) {
-  const ast = babel.transform(src).ast;
-  
+function removeSourceMap(ast) {
   babel.traverse(ast, {
     enter(path) {
       if (path.node.loc) delete path.node.loc;
@@ -16,11 +14,18 @@ function getRenderFunctionExpression(src) {
       delete path.node.end;
     }
   });
+}
 
+function getRenderFunctionExpression(ast) {
   return ast.program.body[0].declarations[0].init;
 }
 
+function getStaticRenderFunctionExpressions(ast) {
+  return ast.program.body[1].declarations[0].init;
+}
+
 const {
+  ArrayExpression,
   ObjectProperty,
   Identifier,
   VariableDeclaration,
@@ -31,7 +36,7 @@ const {
   ExportDefaultDeclaration
 } = babel.types;
 
-const getPlugin = (renderFunctionExpression, isFunctional) => {
+const getPlugin = (renderFunctionExpr, staticRenderArrayExpr, isFunctional) => {
   return function AddFunctionPlugin() {
     return {
       visitor: {
@@ -46,11 +51,20 @@ const getPlugin = (renderFunctionExpression, isFunctional) => {
             ExportDefaultDeclaration(Identifier('__export__'))
           ];
 
-          if (renderFunctionExpression) {
+          if (renderFunctionExpr) {
             statements.splice(1, 0, ExpressionStatement(
               AssignmentExpression('=',
                 MemberExpression(Identifier('__export__'), Identifier('render')),
-                renderFunctionExpression
+                renderFunctionExpr
+              )
+            ));
+          }
+
+          if (staticRenderArrayExpr) {
+            statements.splice(1, 0, ExpressionStatement(
+              AssignmentExpression('=',
+                MemberExpression(Identifier('__export__'), Identifier('staticRenderFns')),
+                staticRenderArrayExpr
               )
             ));
           }
@@ -90,8 +104,16 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
     isProduction: true // just disables prettifying render functions as of 2.2.0
   }) : {};
 
-  const renderFunctionExpression = code && getRenderFunctionExpression(code);
-  plugins.unshift(getPlugin(renderFunctionExpression, template && template.attrs.functional));
+  let renderFunctionExpr, staticRenderArrayExpr;
+
+  if (code) {
+    const ast = babel.transform(code).ast;
+    removeSourceMap(ast);
+    renderFunctionExpr = getRenderFunctionExpression(ast);
+    staticRenderArrayExpr = getStaticRenderFunctionExpressions(ast);
+  }
+
+  plugins.unshift(getPlugin(renderFunctionExpr, staticRenderArrayExpr, template && template.attrs.functional));
 
   const ast = babel.transform(script ? script.content : 'export default {};', {plugins}).ast;
 
