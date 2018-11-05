@@ -3,9 +3,6 @@ const generate = require('@babel/generator').default;
 const compiler = require('vue-template-compiler');
 const cutils = require('@vue/component-compiler-utils');
 
-// Requiring it directly avoids babel/babel#3969
-const ExportDefaultPlugin = require('@babel/plugin-transform-modules-commonjs');
-
 function removeSourceMap(ast) {
   babel.traverse(ast, {
     enter(path) {
@@ -89,7 +86,7 @@ const getPlugin = (renderFunctionExpr, staticRenderArrayExpr, isFunctional) => {
 };
 
 module.exports = function (vueSource, vueFilename, extraPlugins) {
-  const plugins = [ExportDefaultPlugin].concat(extraPlugins || []);
+  const plugins = extraPlugins || [];
 
   const {script, template} = cutils.parse({
     source: vueSource,
