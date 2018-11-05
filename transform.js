@@ -1,10 +1,10 @@
-const babel = require('babel-core');
-const generate = require('babel-generator').default;
+const babel = require('@babel/core');
+const generate = require('@babel/generator').default;
 const compiler = require('vue-template-compiler');
 const cutils = require('@vue/component-compiler-utils');
 
 // Requiring it directly avoids babel/babel#3969
-const ExportDefaultPlugin = require('babel-plugin-transform-es2015-modules-commonjs');
+const ExportDefaultPlugin = require('@babel/plugin-transform-modules-commonjs');
 
 function removeSourceMap(ast) {
   babel.traverse(ast, {
@@ -107,7 +107,7 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
   let renderFunctionExpr, staticRenderArrayExpr;
 
   if (code) {
-    const ast = babel.transform(code).ast;
+    const ast = babel.parse(code);
     removeSourceMap(ast);
     renderFunctionExpr = getRenderFunctionExpression(ast);
     staticRenderArrayExpr = getStaticRenderFunctionExpressions(ast);
@@ -115,7 +115,7 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
 
   plugins.unshift(getPlugin(renderFunctionExpr, staticRenderArrayExpr, template && template.attrs.functional));
 
-  const ast = babel.transform(script ? script.content : 'export default {};', {plugins}).ast;
+  const ast = babel.transformSync(script ? script.content : 'export default {};', {plugins, ast: true}).ast;
 
   return generate(ast, {sourceMaps: true, filename: vueFilename, sourceFileName: vueFilename, sourceMapTarget: vueFilename});
 };
