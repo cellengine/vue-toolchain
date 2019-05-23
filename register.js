@@ -4,7 +4,7 @@ const jsHook = require.extensions['.js'];
 require.extensions['.vue'] = function (module, file) {
   const oldCompile = module._compile;
   module._compile = function (code, file) {
-    code = transform(code).code;
+    code = transform(code).babel.code;
     module._compile = oldCompile;
     module._compile(code, file);
   };

@@ -94,11 +94,12 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
     needMap: false
   });
 
-  const {code} = template ? cutils.compileTemplate({
+  const {code, tips, errors} = template ? cutils.compileTemplate({
     source: template.content,
     compiler,
     isFunctional: template && template.attrs.functional,
-    isProduction: true // just disables prettifying render functions as of 2.2.0
+    isProduction: true, // just disables prettifying render functions as of 2.2.0
+    compilerOptions: {outputSourceRange: true}
   }) : {};
 
   let renderFunctionExpr, staticRenderArrayExpr;
@@ -114,5 +115,10 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
 
   const ast = babel.transformSync(script ? script.content : 'export default {};', {plugins, ast: true}).ast;
 
-  return generate(ast, {sourceMaps: true, filename: vueFilename, sourceFileName: vueFilename, sourceMapTarget: vueFilename});
+  return {
+    babel: generate(ast, {sourceMaps: true, filename: vueFilename, sourceFileName: vueFilename, sourceMapTarget: vueFilename}),
+    tips,
+    errors,
+    template
+  };
 };
