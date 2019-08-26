@@ -1,6 +1,5 @@
 const babel = require('@babel/core');
 const generate = require('@babel/generator').default;
-const compiler = require('vue-template-compiler');
 const cutils = require('@vue/component-compiler-utils');
 
 function removeSourceMap(ast) {
@@ -86,6 +85,7 @@ const getPlugin = (renderFunctionExpr, staticRenderArrayExpr, isFunctional) => {
 };
 
 module.exports = function (vueSource, vueFilename, extraPlugins) {
+  const compiler = module.exports.compiler || require("vue-template-compiler");
   const plugins = extraPlugins || [];
 
   const {script, template} = cutils.parse({
@@ -122,3 +122,5 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
     template
   };
 };
+
+module.exports.registerCompiler = c => module.exports.compiler = c;

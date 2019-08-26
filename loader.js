@@ -1,5 +1,5 @@
 const transform = require('./transform');
-const compiler = require('vue-template-compiler'); // just used for logging
+const compiler = transform.compiler || require("vue-template-compiler"); // just used for logging
 
 let SourceMapConsumer, SourceMapGenerator;
 
