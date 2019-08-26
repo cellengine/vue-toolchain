@@ -1,7 +1,7 @@
 const {Transform} = require('stream');
-const {parseComponent} = require('vue-template-compiler');
 
-module.exports = function () {
+module.exports = function (compiler) {
+  const {parseComponent} = compiler || require('vue-template-compiler');
   return new Transform({
 		objectMode: true,
     transform(file, enc, cb) {
