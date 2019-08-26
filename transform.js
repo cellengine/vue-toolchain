@@ -85,7 +85,7 @@ const getPlugin = (renderFunctionExpr, staticRenderArrayExpr, isFunctional) => {
 };
 
 module.exports = function (vueSource, vueFilename, extraPlugins) {
-  const compiler = module.exports.compiler || require("vue-template-compiler");
+  const compiler = module.exports.compiler || require('vue-template-compiler');
   const plugins = extraPlugins || [];
 
   const {script, template} = cutils.parse({
