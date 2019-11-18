@@ -101,12 +101,14 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
     needMap: false
   });
 
+  const whitespace = template && template.attrs && template.attrs.condense ? 'condense' : 'preserve';
+
   const {code, tips, errors} = template ? cutils.compileTemplate({
     source: template.content,
     compiler,
     isFunctional: template && template.attrs.functional,
     isProduction: true, // just disables prettifying render functions as of 2.2.0
-    compilerOptions: {outputSourceRange: true}
+    compilerOptions: {outputSourceRange: true, whitespace}
   }) : {};
 
   let renderFunctionDeclr, staticRenderArrayExpr;
