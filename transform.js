@@ -12,14 +12,6 @@ function removeSourceMap(ast) {
   });
 }
 
-function getRenderFunctionExpression(ast) {
-  return ast.program.body[0].declarations[0].init;
-}
-
-function getStaticRenderFunctionExpressions(ast) {
-  return ast.program.body[1].declarations[0].init;
-}
-
 const {
   ArrayExpression,
   ObjectProperty,
@@ -29,10 +21,21 @@ const {
   ExpressionStatement,
   AssignmentExpression,
   MemberExpression,
-  ExportDefaultDeclaration
+  ExportDefaultDeclaration,
+  LogicalExpression,
+  FunctionDeclaration
 } = babel.types;
 
-const getPlugin = (renderFunctionExpr, staticRenderArrayExpr, isFunctional) => {
+function getRenderFunctionDeclaration(ast) {
+  const expr = ast.program.body[0].declarations[0].init;
+  return FunctionDeclaration(Identifier('render'), expr.params, expr.body);
+}
+
+function getStaticRenderFunctionExpressions(ast) {
+  return ast.program.body[1].declarations[0].init;
+}
+
+const getPlugin = (renderFunctionDeclr, staticRenderArrayExpr, isFunctional) => {
   return function AddFunctionPlugin() {
     return {
       visitor: {
@@ -47,13 +50,17 @@ const getPlugin = (renderFunctionExpr, staticRenderArrayExpr, isFunctional) => {
             ExportDefaultDeclaration(Identifier('__export__'))
           ];
 
-          if (renderFunctionExpr) {
+          if (renderFunctionDeclr) {
             statements.splice(1, 0, ExpressionStatement(
               AssignmentExpression('=',
                 MemberExpression(Identifier('__export__'), Identifier('render')),
-                renderFunctionExpr
+                LogicalExpression('||',
+                  MemberExpression(Identifier('__export__'), Identifier('render')),
+                  Identifier('render')
+                )
               )
             ));
+            statements.splice(1, 0, renderFunctionDeclr);
           }
 
           if (staticRenderArrayExpr) {
@@ -102,16 +109,16 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
     compilerOptions: {outputSourceRange: true}
   }) : {};
 
-  let renderFunctionExpr, staticRenderArrayExpr;
+  let renderFunctionDeclr, staticRenderArrayExpr;
 
   if (code) {
     const ast = babel.parse(code);
     removeSourceMap(ast);
-    renderFunctionExpr = getRenderFunctionExpression(ast);
+    renderFunctionDeclr = getRenderFunctionDeclaration(ast);
     staticRenderArrayExpr = getStaticRenderFunctionExpressions(ast);
   }
 
-  plugins.unshift(getPlugin(renderFunctionExpr, staticRenderArrayExpr, template && template.attrs.functional));
+  plugins.unshift(getPlugin(renderFunctionDeclr, staticRenderArrayExpr, template && template.attrs.functional));
 
   const ast = babel.transformSync(script ? script.content : 'export default {};', {plugins, ast: true}).ast;
 
