@@ -1,6 +1,6 @@
 {
   "name": "vue-toolchain",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Simplified toolchain for Vue development",
   "main": "index.js",
   "author": "Caleb Hearon",
