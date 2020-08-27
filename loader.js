@@ -1,13 +1,6 @@
 const transform = require('./transform');
 const compiler = transform.compiler || require("vue-template-compiler"); // just used for logging
-
-let SourceMapConsumer, SourceMapGenerator;
-
-try {
-  const sourceMap = require('source-map');
-  SourceMapConsumer = sourceMap.SourceMapConsumer;
-  SourceMapGenerator = sourceMap.SourceMapGenerator;
-} catch (e) {}
+const {SourceMapConsumer, SourceMapGenerator} = require('source-map');
 
 function pad(source) {
   return source.split(/\r?\n/).map(line => `  ${line}`).join('\n');
