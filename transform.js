@@ -108,7 +108,8 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
     compiler,
     isFunctional: template && template.attrs.functional,
     isProduction: true, // just disables prettifying render functions as of 2.2.0
-    compilerOptions: {outputSourceRange: true, whitespace}
+    compilerOptions: {outputSourceRange: true, whitespace},
+    transpileOptions: {transforms: {spreadRest: false}}
   }) : {};
 
   let renderFunctionDeclr, staticRenderArrayExpr;
