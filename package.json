@@ -9,9 +9,10 @@
     "test": "mocha -r register.js demo/*.spec.js"
   },
   "dependencies": {
-    "@babel/core": "~7.11.4",
-    "@babel/generator": "~7.11.4",
-    "@vue/component-compiler-utils": "^3.0.0",
+    "@babel/core": "^7.15.5",
+    "@babel/generator": "^7.15.4",
+    "@vue/component-compiler-utils": "^3.2.2",
+    "htmlparser2": "^7.1.1",
     "source-map": "0.5.7"
   },
   "devDependencies": {
