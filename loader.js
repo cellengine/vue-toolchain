@@ -1,14 +1,12 @@
 const transform = require('./transform');
-const compiler = transform.compiler || require("vue-template-compiler"); // just used for logging
-const {SourceMapConsumer, SourceMapGenerator} = require('source-map');
+const compiler = require('@vue/compiler-sfc');
 
 function pad(source) {
   return source.split(/\r?\n/).map(line => `  ${line}`).join('\n');
 }
 
 module.exports = function (content) {
-  const {babel: {code, map}, tips, errors, template} = transform(content, this.resourcePath);
-  let finalMap = null;
+  const {code, map, tips, errors, template} = transform(content, this.resourcePath);
 
   for (const tip of tips || []) {
     this.emitWarning(typeof tip === 'object' ? tip.msg : tip);
@@ -25,11 +23,5 @@ module.exports = function (content) {
     );
   }
 
-  if (SourceMapConsumer && SourceMapGenerator) {
-    const consumer = SourceMapConsumer(map);
-    finalMap = SourceMapGenerator.fromSourceMap(consumer);
-    finalMap.setSourceContent(this.resourcePath, content);
-  }
-
-  this.callback(null, code, finalMap && finalMap.toJSON());
+  this.callback(null, code, map);
 };
