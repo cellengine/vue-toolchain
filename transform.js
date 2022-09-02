@@ -91,6 +91,7 @@ const getPlugin = (renderFunctionDeclr, staticRenderArrayExpr, isFunctional) => 
 };
 
 module.exports = function (vueSource, vueFilename, extraPlugins) {
+  vueFilename = vueFilename.replace(/\\/g, "/");
   const plugins = extraPlugins || [];
   const sfc = compiler.parse({source: vueSource, filename: vueFilename});
   const script = sfc.script || sfc.scriptSetup ? compiler.compileScript(sfc) : null;
