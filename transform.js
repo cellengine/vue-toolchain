@@ -82,8 +82,6 @@ const getPlugin = (renderFunctionDeclr, staticRenderArrayExpr, isFunctional) => 
 
           const args = [body.indexOf(path.node), 1].concat(statements);
           body.splice.apply(body, args);
-
-          path.stop();
         }
       }
     };
@@ -114,6 +112,10 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
     staticRenderArrayExpr = getStaticRenderFunctionExpressions(ast);
   }
   plugins.unshift(getPlugin(renderFunctionDeclr, staticRenderArrayExpr, sfc.template && sfc.template.attrs.functional));
+
+  if (script && script.lang === 'ts') {
+    plugins.unshift(require('@babel/plugin-transform-typescript').default);
+  }
 
   const ast = babel.transformSync(script ? script.content : 'export default {};', {plugins, ast: true}).ast;
   const generated = generate(ast, {sourceMaps: true, sourceFileName: vueFilename});
