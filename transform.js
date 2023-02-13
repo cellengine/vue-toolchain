@@ -1,7 +1,5 @@
 const babel = require('@babel/core');
-const generate = require('@babel/generator').default;
 const compiler = require('@vue/compiler-sfc');
-const {SourceMapConsumer, SourceMapGenerator} = require('source-map');
 
 function removeSourceMap(ast) {
   babel.traverse(ast, {
@@ -117,44 +115,16 @@ module.exports = async function (vueSource, vueFilename, extraPlugins) {
     plugins.unshift(require('@babel/plugin-transform-typescript').default);
   }
 
-  const ast = babel.transformSync(script ? script.content : 'export default {};', {plugins, ast: true}).ast;
-  const generated = generate(ast, {sourceMaps: true, sourceFileName: vueFilename});
-  const compilerMapConsumer = await new SourceMapConsumer(script && script.map);
-  const componentMapConsumer = await new SourceMapConsumer(generated.map);
-  const finalMapGenerator = new SourceMapGenerator();
-
-  compilerMapConsumer.eachMapping(mapping => {
-    const gens = componentMapConsumer.allGeneratedPositionsFor({
-      source: mapping.source,
-      line: mapping.generatedLine,
-      column: mapping.generatedColumn
-    });
-
-    for (const gen of gens) {
-      if (gen.line != null) {
-        finalMapGenerator.addMapping({
-          source: mapping.source,
-          generated: {
-            line: gen.line,
-            column: gen.column
-          },
-          original: {
-            line: mapping.originalLine,
-            column: mapping.originalColumn
-          }
-        });
-      }
-    }
+  const generated = babel.transformSync(script ? script.content : 'export default {};', {
+    plugins,
+    inputSourceMap: script.map,
+    sourceFileName: vueFilename,
+    sourceMaps: true
   });
-
-  compilerMapConsumer.destroy();
-  componentMapConsumer.destroy();
-
-  finalMapGenerator.setSourceContent(vueFilename, vueSource);
 
   return {
     code: generated.code,
-    map: finalMapGenerator.toJSON(),
+    map: generated.map,
     tips: template && template.tips || [],
     errors: template && template.errors || [],
     template
