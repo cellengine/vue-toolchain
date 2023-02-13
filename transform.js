@@ -88,7 +88,7 @@ const getPlugin = (renderFunctionDeclr, staticRenderArrayExpr, isFunctional) => 
   }
 };
 
-module.exports = function (vueSource, vueFilename, extraPlugins) {
+module.exports = async function (vueSource, vueFilename, extraPlugins) {
   vueFilename = vueFilename.replace(/\\/g, "/");
   const plugins = extraPlugins || [];
   const sfc = compiler.parse({source: vueSource, filename: vueFilename});
@@ -119,8 +119,8 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
 
   const ast = babel.transformSync(script ? script.content : 'export default {};', {plugins, ast: true}).ast;
   const generated = generate(ast, {sourceMaps: true, sourceFileName: vueFilename});
-  const compilerMapConsumer = new SourceMapConsumer(script && script.map);
-  const componentMapConsumer = new SourceMapConsumer(generated.map);
+  const compilerMapConsumer = await new SourceMapConsumer(script && script.map);
+  const componentMapConsumer = await new SourceMapConsumer(generated.map);
   const finalMapGenerator = new SourceMapGenerator();
 
   compilerMapConsumer.eachMapping(mapping => {
@@ -146,6 +146,9 @@ module.exports = function (vueSource, vueFilename, extraPlugins) {
       }
     }
   });
+
+  compilerMapConsumer.destroy();
+  componentMapConsumer.destroy();
 
   finalMapGenerator.setSourceContent(vueFilename, vueSource);
 
