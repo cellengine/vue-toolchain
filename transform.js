@@ -91,6 +91,8 @@ module.exports = async function (vueSource, vueFilename, extraPlugins) {
   const plugins = extraPlugins || [];
   const sfc = compiler.parse({source: vueSource, filename: vueFilename});
   const script = sfc.script || sfc.scriptSetup ? compiler.compileScript(sfc) : null;
+  const lang = sfc.script?.lang || sfc.scriptSetup?.lang;
+  const isTS = !!(lang && /tsx?$/.test(lang));
   const whitespace = sfc.template ? (sfc.template.attrs && sfc.template.attrs.condense ? 'condense' : 'preserve') : null;
   const template = sfc.template ? compiler.compileTemplate({
     bindings: script && script.bindings,
@@ -98,22 +100,22 @@ module.exports = async function (vueSource, vueFilename, extraPlugins) {
     isFunctional: sfc.template ? sfc.template.attrs.functional : false,
     isProduction: true, // just disables prettifying render functions as of 2.2.0
     compilerOptions: {outputSourceRange: true, whitespace},
-    transpileOptions: {transforms: {spreadRest: false}}
+    transpileOptions: {transforms: {spreadRest: false}},
+    isTS
   }) : null;
 
   let renderFunctionDeclr, staticRenderArrayExpr;
 
   if (template) {
-    const ast = babel.parse(template.code);
+    const plugins = isTS ? ['@babel/plugin-transform-typescript'] : [];
+    const ast = babel.transformSync(template.code, {plugins, ast: true}).ast;
     removeSourceMap(ast);
     renderFunctionDeclr = getRenderFunctionDeclaration(ast);
     staticRenderArrayExpr = getStaticRenderFunctionExpressions(ast);
   }
   plugins.unshift(getPlugin(renderFunctionDeclr, staticRenderArrayExpr, sfc.template && sfc.template.attrs.functional));
 
-  if (script && script.lang === 'ts') {
-    plugins.unshift(require('@babel/plugin-transform-typescript').default);
-  }
+  if (isTS) plugins.unshift(require('@babel/plugin-transform-typescript').default);
 
   const generated = babel.transformSync(script ? script.content : 'export default {};', {
     plugins,
