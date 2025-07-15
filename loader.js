@@ -12,22 +12,19 @@ module.exports = function (content) {
       this.emitWarning(typeof tip === 'object' ? tip.msg : tip);
     }
 
-    if (errors) {
-      errors = errors.filter(e => !e.msg.startsWith("invalid expression:"));
-      if (errors.length) {
-        this.emitError(
-          '\n\n  Errors compiling template:\n\n' +
-          errors.map(({msg, start, end}) => {
-            if (template.content) {
-              const frame = compiler.generateCodeFrame(template.content, start, end)
-              if (frame) return `  ${msg}\n\n${pad(frame)}`
-            }
+    if (errors && errors.length) {
+      this.emitError(
+        '\n\n  Errors compiling template:\n\n' +
+        errors.map(({msg, start, end}) => {
+          if (template.content) {
+            const frame = compiler.generateCodeFrame(template.content, start, end)
+            if (frame) return `  ${msg}\n\n${pad(frame)}`
+          }
 
-            return `  ${msg}`
-          }).join('\n\n') +
-          '\n'
-        );
-      }
+          return `  ${msg}`
+        }).join('\n\n') +
+        '\n'
+      );
     }
 
     callback(null, code, map);

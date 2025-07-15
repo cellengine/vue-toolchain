@@ -94,6 +94,8 @@ module.exports = async function (vueSource, vueFilename, extraPlugins) {
   const lang = sfc.script?.lang || sfc.scriptSetup?.lang;
   const isTS = !!(lang && /tsx?$/.test(lang));
   const whitespace = sfc.template ? (sfc.template.attrs && sfc.template.attrs.condense ? 'condense' : 'preserve') : null;
+  const NODE_ENV = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
   const template = sfc.template ? compiler.compileTemplate({
     bindings: script && script.bindings,
     source: sfc.template.content,
@@ -103,6 +105,7 @@ module.exports = async function (vueSource, vueFilename, extraPlugins) {
     transpileOptions: {transforms: {spreadRest: false}},
     isTS
   }) : null;
+  process.env.NODE_ENV = NODE_ENV;
 
   let renderFunctionDeclr, staticRenderArrayExpr;
 
