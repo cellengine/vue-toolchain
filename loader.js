@@ -16,8 +16,12 @@ module.exports = function (content) {
       this.emitError(
         '\n\n  Errors compiling template:\n\n' +
         errors.map(({msg, start, end}) => {
-          const frame = compiler.generateCodeFrame(template.content, start, end)
-          return `  ${msg}\n\n${pad(frame)}`
+          if (template.content) {
+            const frame = compiler.generateCodeFrame(template.content, start, end)
+            if (frame) return `  ${msg}\n\n${pad(frame)}`
+          }
+
+          return `  ${msg}`
         }).join('\n\n') +
         '\n'
       );
